@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOIR STUDY PRO : Master Your Time</title>
+    <style>
+        /* [SYSTEM] Variables & Reset */
+        :root {
+            --bg-main: #050505;
+            --bg-panel: #111111;
+            --bg-panel-hover: #161616;
+            --border-dim: #222222;
+            --border-light: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-tertiary: #444444;
+            --accent: #ffffff;
+            --font-stack: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            height: 100vh;
+            overflow: hidden; /* App-like feel */
+            display: flex;
+            justify-content: center;
+        }
+
+        /* [LAYOUT] Grid Architecture */
+        .wrapper {
+            width: 100%;
+            max-width: 1600px;
+            height: 100vh;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            gap: 20px;
+            grid-template-areas: 
+                "header header header"
+                "left center right";
+        }
+
+        @media (max-width: 1200px) {
+            .wrapper {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 60px auto auto;
+                grid-template-areas: 
+                    "header header"
+                    "left right"
+                    "center center";
+                overflow-y: auto;
+            }
+        }
+
+        /* [COMPONENTS] Cards & Typography */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s;
+            position: relative;
+        }
+        .panel:hover { border-color: var(--border-light); }
+        
+        h2 {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 10px;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: var(--text-primary); color: var(--bg-main); }
+
+        input[type="text"], textarea {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            width: 100%;
+        }
+        input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
+
+        /* [HEADER] Area */
+        .header-area {
+            grid-area: header;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-dim);
+            padding: 0 10px;
+        }
+        .brand { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+        .header-controls { display: flex; gap: 15px; }
+        .system-btn {
+            font-size: 11px;
+            border: 1px solid var(--border-dim);
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .system-btn:hover { border-color: var(--text-primary); color: var(--text-primary); }
+
+        /* [LEFT COLUMN] Timers & Subjects */
+        .left-col { grid-area: left; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+        .timer-hero {
+            text-align: center;
+            padding: 30px 0;
+        }
+        .timer-hero h1 { font-size: 56px; font-weight: 200; letter-spacing: -1px; line-height: 1; }
+        .timer-hero span { font-size: 11px; color: var(--text-secondary); letter-spacing: 2px; }
+
+        .subject-list { list-style: none; margin-top: 10px; }
+        .subject-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border-dim);
+            transition: background 0.2s;
+        }
+        .subject-item:hover { background: var(--bg-panel-hover); }
+        .subject-item.active { background: #1a1a1a; border-left: 2px solid #fff; }
+        
+        .sub-name { font-size: 14px; font-weight: 500; }
+        .sub-time { font-size: 12px; color: var(--text-secondary); margin-right: 10px; }
+        .control-group { display: flex; gap: 5px; }
+
+        /* [CENTER COLUMN] Calendar & Dashboard */
+        .center-col { grid-area: center; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+        /* D-DAY Widget */
+        .d-day-widget {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #111;
+            padding: 15px;
+            border: 1px solid var(--border-dim);
+        }
+        .d-day-display { font-size: 24px; font-weight: bold; }
+        .d-day-input { text-align: right; width: 120px; font-size: 12px; color: #666; cursor: pointer; }
+        
+        /* Calendar */
+        .calendar-header { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+        .cal-day-name { font-size: 10px; color: var(--text-tertiary); padding-bottom: 10px; }
+        .cal-date {
+            aspect-ratio: 1/1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+        }
+        .cal-date.today { border: 1px solid var(--text-primary); color: var(--text-primary); font-weight: bold; }
+        .cal-date.empty { background: transparent; border: none; }
+
+        /* Timetable Visualization */
+        .timetable-strip {
+            display: flex;
+            height: 40px;
+            width: 100%;
+            margin-top: 10px;
+            border: 1px solid var(--border-dim);
+            background: var(--bg-main);
+        }
+        .time-block {
+            flex: 1;
+            border-right: 1px solid #111;
+            position: relative;
+        }
+        .time-block:hover::after {
+            content: attr(data-hour);
+            position: absolute; top: -20px; left: 0;
+            font-size: 10px; color: #fff;
+        }
+        .time-block.active-hour { background: #333; }
+
+        /* [RIGHT COLUMN] Tools */
+        .right-col { grid-area: right; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+        /* Todo */
+        .todo-input-wrap { display: flex; border-bottom: 1px solid var(--border-dim); margin-bottom: 10px; }
+        .todo-input-wrap input { padding: 10px 0; }
+        .todo-item { display: flex; align-items: center; padding: 8px 0; font-size: 13px; color: #ccc; }
+        .todo-check {
+            width: 14px; height: 14px; border: 1px solid #666; margin-right: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .todo-item.checked .todo-check { background: #fff; border-color: #fff; }
+        .todo-item.checked span { text-decoration: line-through; color: #444; }
+
+        /* Memo & Gallery */
+        .memo-box {
+            width: 100%; height: 120px; resize: none; 
+            background: #0d0d0d; border: 1px solid var(--border-dim); padding: 10px;
+            font-size: 12px; line-height: 1.5;
+        }
+        
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .gal-img {
+            width: 100%; aspect-ratio: 1; object-fit: cover;
+            background: #0d0d0d; border: 1px solid var(--border-dim);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: #333;
+        }
+
+        /* Focus Mode Overlay */
+        #focus-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 999;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        #focus-timer { font-size: 120px; font-weight: 100; color: #fff; }
+        #focus-subject { font-size: 24px; color: #888; margin-bottom: 40px; letter-spacing: 4px; }
+        .exit-focus { padding: 10px 30px; border: 1px solid #333; color: #fff; background: transparent; cursor: pointer;}
+        
+    </style>
+</head>
+<body>
+
+    <div id="focus-overlay">
+        <div id="focus-subject">SUBJECT NAME</div>
+        <div id="focus-timer">00:00:00</div>
+        <button class="exit-focus" onclick="toggleFocusMode()">EXIT FOCUS MODE</button>
+    </div>
+
+    <div class="wrapper">
+        <header class="header-area">
+            <div class="brand">NOIR STUDY <span style="font-weight:100; opacity:0.5;">PRO</span></div>
+            <div class="header-controls">
+                <button class="system-btn" onclick="resetDay()">RESET DAY</button>
+                <button class="system-btn" onclick="toggleFocusMode()">FOCUS MODE</button>
+            </div>
+        </header>
+
+        <aside class="left-col">
+            <div class="panel">
+                <div class="timer-hero">
+                    <span>TOTAL STUDY TIME</span>
+                    <h1 id="total-timer">00:00:00</h1>
+                </div>
+            </div>
+
+            <div class="panel" style="flex:1;">
+                <h2>Subjects <button class="btn-icon" onclick="addSubject()">+</button></h2>
+                <div style="margin-bottom:10px;">
+                    <input type="text" id="new-sub-input" placeholder="Add subject..." onkeypress="if(event.key==='Enter') addSubject()">
+                </div>
+                <ul class="subject-list" id="subject-list">
+                    </ul>
+            </div>
+        </aside>
+
+        <main class="center-col">
+            
+            <div class="d-day-widget">
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:10px; color:#555; letter-spacing:1px;">TARGET DATE</span>
+                    <div class="d-day-display" id="d-day-display">D-DAY</div>
+                </div>
+                <div>
+                    <input type="date" id="target-date-input" class="d-day-input" onchange="calcDDay()">
+                </div>
+            </div>
+
+            <div class="panel" style="padding:15px; text-align:center;">
+                <input type="text" id="quote-input" style="text-align:center; font-style:italic;" placeholder="Insert your motivation..." onchange="saveData()">
+            </div>
+
+            <div class="panel">
+                <h2>Calendar 
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-icon" onclick="changeMonth(-1)"><</button>
+                        <span id="cal-month-year" style="font-size:12px; line-height:24px; padding:0 10px;">YYYY.MM</span>
+                        <button class="btn-icon" onclick="changeMonth(1)">></button>
+                    </div>
+                </h2>
+                <div class="calendar-grid" id="calendar-grid">
+                    </div>
+            </div>
+
+            <div class="panel">
+                <h2>Today's Timeline <span style="font-size:10px;">06:00 - 02:00</span></h2>
+                <div class="timetable-strip" id="timetable-strip">
+                    </div>
+                <div id="stats-bars" style="margin-top:20px;">
+                    </div>
+            </div>
+        </main>
+
+        <aside class="right-col">
+            <div class="panel">
+                <h2>Checklist</h2>
+                <div class="todo-input-wrap">
+                    <input type="text" id="todo-input" placeholder="New Task..." onkeypress="if(event.key==='Enter') addTodo()">
+                    <button class="btn-icon" onclick="addTodo()">+</button>
+                </div>
+                <div id="todo-list"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Memo</h2>
+                <textarea id="memo-area" class="memo-box" placeholder="Free space..." onkeyup="saveData()"></textarea>
+            </div>
+
+            <div class="panel">
+                <h2>Gallery</h2>
+                <div class="gallery-grid">
+                    <img src="image.png" class="gal-img" onerror="this.style.display='flex';this.innerText='NO IMG';">
+                    <img src="image2.png" class="gal-img" onerror="this.style.display='flex';this.innerText='NO IMG';">
+                    <img src="image3.png" class="gal-img" onerror="this.style.display='flex';this.innerText='NO IMG';">
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        /**
+         * NOIR STUDY PRO ENGINE
+         * Single file architecture
+         */
+
+        // [STATE MANAGEMENT]
+        let app = {
+            subjects: [],
+            todos: [],
+            memo: "",
+            quote: "",
+            targetDate: "",
+            activeSubId: null,
+            totalSeconds: 0
+        };
+
+        let timerInt = null;
+        let currentMonth = new Date();
+
+        // [INIT]
+        window.onload = () => {
+            loadData();
+            renderAll();
+            renderCalendar();
+            renderTimetable();
+            calcDDay();
+            setInterval(autoSave, 10000); // Autosave
+        };
+
+        // [CORE LOGIC]
+        function addSubject() {
+            const input = document.getElementById('new-sub-input');
+            const name = input.value.trim();
+            if(!name) return;
+            app.subjects.push({ id: Date.now(), name: name, time: 0 });
+            input.value = '';
+            saveData(); renderSubjects(); renderStats();
+        }
+
+        function toggleTimer(id) {
+            if(app.activeSubId === id) {
+                stopTimer();
+            } else {
+                stopTimer();
+                app.activeSubId = id;
+                const sub = app.subjects.find(s => s.id === id);
+                
+                // Focus Mode Update
+                document.getElementById('focus-subject').innerText = sub.name;
+                
+                timerInt = setInterval(() => {
+                    const s = app.subjects.find(s => s.id === app.activeSubId);
+                    if(s) {
+                        s.time++;
+                        document.getElementById(`time-${s.id}`).innerText = fmt(s.time);
+                        updateTotal();
+                        updateFocusTimer(s.time);
+                        
+                        // Visual Feedback on Timetable (Simple check)
+                        const currentH = new Date().getHours();
+                        markTimeline(currentH);
+                    }
+                }, 1000);
+                renderSubjects();
+            }
+        }
+
+        function stopTimer() {
+            clearInterval(timerInt);
+            app.activeSubId = null;
+            saveData();
+            renderSubjects();
+        }
+
+        function resetDay() {
+            if(confirm("Start a new day? Timers will reset.")) {
+                stopTimer();
+                app.subjects.forEach(s => s.time = 0);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function toggleFocusMode() {
+            const overlay = document.getElementById('focus-overlay');
+            overlay.style.display = overlay.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // [TODO LOGIC]
+        function addTodo() {
+            const input = document.getElementById('todo-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+            app.todos.push({ id: Date.now(), text: txt, done: false });
+            input.value = '';
+            saveData(); renderTodos();
+        }
+
+        function toggleTodo(id) {
+            const t = app.todos.find(x => x.id === id);
+            if(t) { t.done = !t.done; saveData(); renderTodos(); }
+        }
+
+        function delTodo(id) {
+            app.todos = app.todos.filter(x => x.id !== id);
+            saveData(); renderTodos();
+        }
+
+        // [CALENDAR LOGIC]
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const label = document.getElementById('cal-month-year');
+            grid.innerHTML = '';
+            
+            // Labels
+            const days = ['S','M','T','W','T','F','S'];
+            days.forEach(d => grid.innerHTML += `<div class="cal-day-name">${d}</div>`);
+
+            const y = currentMonth.getFullYear();
+            const m = currentMonth.getMonth();
+            label.innerText = `${y}.${pad(m+1)}`;
+
+            const firstDay = new Date(y, m, 1).getDay();
+            const lastDate = new Date(y, m+1, 0).getDate();
+            const today = new Date();
+
+            // Empty slots
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div class="cal-date empty"></div>`;
+            }
+
+            // Days
+            for(let i=1; i<=lastDate; i++) {
+                const isToday = (today.getDate() === i && today.getMonth() === m && today.getFullYear() === y);
+                grid.innerHTML += `<div class="cal-date ${isToday ? 'today' : ''}">${i}</div>`;
+            }
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function calcDDay() {
+            const input = document.getElementById('target-date-input');
+            const display = document.getElementById('d-day-display');
+            
+            if(app.targetDate && !input.value) input.value = app.targetDate; // Load saved
+            
+            if(input.value) {
+                app.targetDate = input.value;
+                const target = new Date(input.value);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                
+                const diff = target - today;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                
+                if(days === 0) display.innerText = "D-DAY";
+                else if(days > 0) display.innerText = `D-${days}`;
+                else display.innerText = `D+${Math.abs(days)}`;
+                
+                display.style.color = "#fff";
+                saveData();
+            }
+        }
+
+        // [RENDERING]
+        function renderSubjects() {
+            const list = document.getElementById('subject-list');
+            list.innerHTML = '';
+            app.subjects.forEach(s => {
+                const active = s.id === app.activeSubId;
+                list.innerHTML += `
+                    <li class="subject-item ${active?'active':''}">
+                        <div class="sub-name" style="color:${active?'#fff':'#888'}">${s.name}</div>
+                        <div style="display:flex; align-items:center;">
+                            <span class="sub-time" id="time-${s.id}">${fmt(s.time)}</span>
+                            <div class="control-group">
+                                <button class="btn-icon" onclick="toggleTimer(${s.id})">${active?'■':'▶'}</button>
+                                <button class="btn-icon" onclick="deleteSub(${s.id})">×</button>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            });
+            updateTotal();
+        }
+
+        function renderTodos() {
+            const list = document.getElementById('todo-list');
+            list.innerHTML = '';
+            app.todos.forEach(t => {
+                list.innerHTML += `
+                    <div class="todo-item ${t.done?'checked':''}">
+                        <div class="todo-check" onclick="toggleTodo(${t.id})"></div>
+                        <span style="flex:1" onclick="toggleTodo(${t.id})">${t.text}</span>
+                        <button class="btn-icon" style="border:none; width:auto;" onclick="delTodo(${t.id})">×</button>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStats() {
+            const box = document.getElementById('stats-bars');
+            box.innerHTML = '';
+            const total = app.subjects.reduce((a,c) => a+c.time, 0);
+            
+            app.subjects.forEach(s => {
+                if(s.time === 0) return;
+                const pct = ((s.time / total) * 100).toFixed(1);
+                box.innerHTML += `
+                    <div style="margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:10px; color:#666; margin-bottom:2px;">
+                            <span>${s.name}</span><span>${pct}%</span>
+                        </div>
+                        <div style="width:100%; height:3px; background:#222;">
+                            <div style="height:100%; background:#fff; width:${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTimetable() {
+            const strip = document.getElementById('timetable-strip');
+            let html = '';
+            // 06:00 to 02:00 (next day) = 20 hours
+            for(let i=0; i<20; i++) {
+                let h = i + 6; 
+                if(h >= 24) h -= 24;
+                html += `<div class="time-block" id="hour-${h}" data-hour="${h}"></div>`;
+            }
+            strip.innerHTML = html;
+        }
+
+        function markTimeline(hour) {
+            const block = document.getElementById(`hour-${hour}`);
+            if(block && !block.classList.contains('active-hour')) {
+                block.classList.add('active-hour');
+            }
+        }
+
+        function updateTotal() {
+            const total = app.subjects.reduce((a,c) => a+c.time, 0);
+            document.getElementById('total-timer').innerText = fmt(total);
+            renderStats();
+        }
+        
+        function updateFocusTimer(time) {
+            document.getElementById('focus-timer').innerText = fmt(time);
+        }
+
+        function deleteSub(id) {
+            if(app.activeSubId === id) stopTimer();
+            app.subjects = app.subjects.filter(s => s.id !== id);
+            saveData(); renderSubjects(); renderStats();
+        }
+
+        // [UTILS]
+        function fmt(s) {
+            const h = Math.floor(s/3600);
+            const m = Math.floor((s%3600)/60);
+            const sc = s%60;
+            return `${pad(h)}:${pad(m)}:${pad(sc)}`;
+        }
+        function pad(n) { return n<10 ? '0'+n : n; }
+
+        function saveData() {
+            app.quote = document.getElementById('quote-input').value;
+            app.memo = document.getElementById('memo-area').value;
+            localStorage.setItem('noirProData', JSON.stringify(app));
+        }
+
+        function loadData() {
+            const d = localStorage.getItem('noirProData');
+            if(d) {
+                app = JSON.parse(d);
+                app.activeSubId = null; // reset timer state
+                document.getElementById('quote-input').value = app.quote || '';
+                document.getElementById('memo-area').value = app.memo || '';
+            }
+        }
+        function autoSave() { saveData(); }
+
+    </script>
+</body>
+</html>
