@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOCUS | Professional Study Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>FOCUS</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="switchTab('timer')"><i class="ph ph-timer"></i> TIMER</li>
+                <li onclick="switchTab('todo')"><i class="ph ph-check-square"></i> TODO</li>
+                <li onclick="switchTab('calendar')"><i class="ph ph-calendar"></i> REPORT</li>
+                <li onclick="switchTab('settings')"><i class="ph ph-gear"></i> SETTING</li>
+            </ul>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <i class="ph ph-moon" id="theme-icon"></i>
+            </div>
+        </nav>
+
+        <main class="content">
+            <section id="timer" class="tab-content active">
+                <div class="hero-image">
+                    <img src="image.png" alt="Focus Mood">
+                    <div class="overlay">
+                        <h3 id="quote-display">"Discipline is freedom."</h3>
+                    </div>
+                </div>
+                <div class="timer-display">
+                    <div class="time-text" id="stopwatch">00:00:00</div>
+                    <div class="controls">
+                        <button id="start-btn" onclick="startTimer()">START</button>
+                        <button id="pause-btn" onclick="pauseTimer()" disabled>PAUSE</button>
+                    </div>
+                </div>
+                <div class="today-stats">
+                    <span>Today's Total: <b id="today-total">00:00:00</b></span>
+                </div>
+            </section>
+
+            <section id="todo" class="tab-content">
+                <div class="header-area">
+                    <h2>Tasks</h2>
+                    <p>Manage your daily goals.</p>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="Add a new task...">
+                    <button onclick="addTodo()">ADD</button>
+                </div>
+                <ul id="todo-list" class="list-group">
+                    </ul>
+            </section>
+
+            <section id="calendar" class="tab-content">
+                <div class="header-area">
+                    <h2>History</h2>
+                </div>
+                <div class="calendar-layout">
+                    <div class="calendar-wrapper">
+                        <div class="calendar-header">
+                            <span id="month-year"></span>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid">
+                            </div>
+                    </div>
+                    <div class="report-card">
+                        <img src="image2.png" alt="Report Image" class="report-img">
+                        <div class="report-info">
+                            <h4>Selected Day</h4>
+                            <p id="selected-date-info">Select a date</p>
+                            <h2 id="selected-study-time">00:00:00</h2>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings" class="tab-content">
+                <div class="profile-card">
+                    <img src="image3.png" alt="User Profile">
+                    <h2>User Settings</h2>
+                    <p>Customize your experience.</p>
+                </div>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <span>Dark Mode</span>
+                        <div class="toggle-switch active" onclick="toggleTheme()"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Reset All Data</span>
+                        <button class="danger-btn" onclick="resetData()">RESET</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
