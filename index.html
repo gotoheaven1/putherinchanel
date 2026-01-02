@@ -3,129 +3,501 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FOCUS | Professional Study Tracker</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <title>PRO FOCUS - Professional Study Tracker</title>
+    <style>
+        /* --- [1] ROOT VARIABLES & THEME --- */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #121212;
+            --card-bg: #f8f8f8;
+            --border-color: #e0e0e0;
+            --accent-color: #000000;
+            --accent-text: #ffffff;
+            --transition-speed: 0.3s;
+            --font-main: 'Helvetica Neue', 'Arial', sans-serif;
+            --success-color: #2e7d32; /* Goal Achievement Color */
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --accent-color: #ffffff;
+            --accent-text: #000000;
+            --success-color: #81c784;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SPLASH SCREEN --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
+        }
+        #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-logo {
+            font-size: 24px; font-weight: 800; letter-spacing: 8px; text-transform: uppercase;
+            margin-bottom: 20px; opacity: 0; transform: translateY(20px); animation: logoEnter 1s ease forwards;
+        }
+        .splash-loader { width: 0%; height: 2px; background-color: var(--text-color); animation: loadingBar 2s ease-in-out forwards; }
+        .splash-loader-container { width: 150px; height: 2px; background-color: var(--border-color); overflow: hidden; }
+        @keyframes logoEnter { to { opacity: 1; transform: translateY(0); } }
+        @keyframes loadingBar { 0% { width: 0%; } 50% { width: 40%; } 100% { width: 100%; } }
+
+        /* --- LAYOUT --- */
+        .app-container {
+            width: 100%; max-width: 480px; background-color: var(--bg-color);
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.1); overflow: hidden;
+            opacity: 0; transform: scale(0.98); transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .app-container.revealed { opacity: 1; transform: scale(1); }
+
+        /* --- HEADER --- */
+        header {
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        h1 { font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .header-controls { display: flex; gap: 10px; }
+        
+        .theme-toggle, .settings-toggle {
+            cursor: pointer; border: 1px solid var(--border-color); background: transparent;
+            color: var(--text-color); padding: 5px 10px; font-size: 10px; text-transform: uppercase;
+            transition: all 0.3s ease; letter-spacing: 1px;
+        }
+        .theme-toggle:hover, .settings-toggle:hover { background: var(--text-color); color: var(--bg-color); }
+
+        /* --- CONTENT --- */
+        .content { flex: 1; padding: 20px; overflow-y: auto; display: none; animation: fadeIn 0.5s ease forwards; }
+        .content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- IMAGE --- */
+        .banner-img {
+            width: 100%; height: 200px; object-fit: cover; border-radius: 4px;
+            margin-bottom: 20px; filter: grayscale(100%); transition: filter 0.5s;
+        }
+        .banner-img:hover { filter: grayscale(0%); }
+
+        /* --- TIMER --- */
+        .timer-display { font-size: 64px; font-weight: 200; text-align: center; margin: 30px 0; font-variant-numeric: tabular-nums; }
+        .subject-select {
+            width: 100%; padding: 15px; background: var(--card-bg); border: 1px solid var(--border-color);
+            color: var(--text-color); font-size: 16px; margin-bottom: 20px; outline: none;
+        }
+        .control-btn {
+            width: 100%; padding: 20px; background-color: var(--accent-color); color: var(--accent-text);
+            border: none; font-size: 16px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: opacity 0.3s;
+        }
+        .control-btn.stop {
+            background-color: transparent; color: var(--text-color); border: 1px solid var(--text-color); margin-top: 10px;
+        }
+
+        /* --- [NEW] GOAL PROGRESS BAR --- */
+        .goal-container { margin-top: 20px; }
+        .goal-label { font-size: 10px; color: #888; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .goal-track { width: 100%; height: 4px; background: var(--border-color); position: relative; }
+        .goal-fill { height: 100%; background: var(--text-color); width: 0%; transition: width 0.5s ease; }
+        .goal-fill.completed { background: var(--success-color); }
+
+        /* --- STATS & PLANNER --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .stat-card { background: var(--card-bg); padding: 15px; border: 1px solid var(--border-color); }
+        .stat-title { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 500; }
+        
+        .bar-chart { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .bar-item { display: flex; align-items: center; font-size: 12px; }
+        .bar-label { width: 80px; }
+        .bar-track { flex: 1; height: 6px; background: var(--border-color); margin: 0 10px; }
+        .bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 1s ease; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .simple-input {
+            flex: 1; padding: 10px; background: transparent; border: none;
+            border-bottom: 1px solid var(--border-color); color: var(--text-color); outline: none;
+        }
+        .add-btn { background: transparent; border: 1px solid var(--text-color); color: var(--text-color); width: 30px; height: 30px; cursor: pointer; }
+        
+        .list-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .checkbox { width: 18px; height: 18px; border: 1px solid var(--text-color); margin-right: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .checkbox.checked::after { content: ''; width: 10px; height: 10px; background-color: var(--text-color); }
+        .item-text { flex: 1; font-size: 14px; }
+        .item-text.completed { text-decoration: line-through; opacity: 0.5; }
+        .memo-area { width: 100%; height: 150px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 15px; resize: none; outline: none; margin-top: 20px; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { display: flex; border-top: 1px solid var(--border-color); background: var(--bg-color); }
+        .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; transition: color 0.3s; }
+        .nav-item.active { color: var(--text-color); font-weight: 700; }
+
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-color); padding: 30px; width: 85%; max-width: 320px; border: 1px solid var(--border-color); }
+        
+        /* Settings Specific */
+        .settings-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .settings-section:last-child { border-bottom: none; }
+        .settings-label { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 10px; display: block; }
+        .danger-btn { color: red; border-color: red; margin-top: 5px; font-size: 12px; width: 100%; padding: 10px; background: transparent; border: 1px solid red; cursor: pointer; text-transform: uppercase; }
+        .action-btn { width: 100%; padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); cursor: pointer; text-transform: uppercase; font-size: 12px; margin-bottom: 5px; }
+
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <nav class="sidebar">
-            <div class="logo">
-                <h2>FOCUS</h2>
-            </div>
-            <ul class="nav-links">
-                <li class="active" onclick="switchTab('timer')"><i class="ph ph-timer"></i> TIMER</li>
-                <li onclick="switchTab('todo')"><i class="ph ph-check-square"></i> TODO</li>
-                <li onclick="switchTab('calendar')"><i class="ph ph-calendar"></i> REPORT</li>
-                <li onclick="switchTab('settings')"><i class="ph ph-gear"></i> SETTING</li>
-            </ul>
-            <div class="theme-toggle" onclick="toggleTheme()">
-                <i class="ph ph-moon" id="theme-icon"></i>
-            </div>
-        </nav>
 
-        <main class="content">
-            <section id="timer" class="tab-content active">
-                <div class="hero-image">
-                    <img src="image.png" alt="Focus Mood">
-                    <div class="overlay">
-                        <h3 id="quote-display">"Discipline is freedom."</h3>
-                    </div>
-                </div>
-                <div class="timer-display">
-                    <div class="time-text" id="stopwatch">00:00:00</div>
-                    <div class="controls">
-                        <button id="start-btn" onclick="startTimer()">START</button>
-                        <button id="pause-btn" onclick="pauseTimer()" disabled>PAUSE</button>
-                    </div>
-                </div>
-                <div class="today-stats">
-                    <span>Today's Total: <b id="today-total">00:00:00</b></span>
-                </div>
-            </section>
-
-            <section id="todo" class="tab-content">
-                <div class="header-area">
-                    <h2>Tasks</h2>
-                    <p>Manage your daily goals.</p>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="todo-input" placeholder="Add a new task...">
-                    <button onclick="addTodo()">ADD</button>
-                </div>
-                <ul id="todo-list" class="list-group">
-                    </ul>
-            </section>
-
-            <section id="calendar" class="tab-content">
-                <div class="header-area">
-                    <h2>History</h2>
-                </div>
-                <div class="calendar-layout">
-                    <div class="calendar-wrapper">
-                        <div class="calendar-header">
-                            <span id="month-year"></span>
-                        </div>
-                        <div class="calendar-grid" id="calendar-grid">
-                            </div>
-                    </div>
-                    <div class="report-card">
-                        <img src="image2.png" alt="Report Image" class="report-img">
-                        <div class="report-info">
-                            <h4>Selected Day</h4>
-                            <p id="selected-date-info">Select a date</p>
-                            <h2 id="selected-study-time">00:00:00</h2>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="settings" class="tab-content">
-                <div class="profile-card">
-                    <img src="image3.png" alt="User Profile">
-                    <h2>User Settings</h2>
-                    <p>Customize your experience.</p>
-                </div>
-                <div class="settings-list">
-                    <div class="setting-item">
-                        <span>Dark Mode</span>
-                        <div class="toggle-switch active" onclick="toggleTheme()"></div>
-                    </div>
-                    <div class="setting-item">
-                        <span>Reset All Data</span>
-                        <button class="danger-btn" onclick="resetData()">RESET</button>
-                    </div>
-                </div>
-            </section>
-        </main>
+<div id="splash-screen">
+    <div class="splash-logo">Pro Focus</div>
+    <div class="splash-loader-container">
+        <div class="splash-loader"></div>
     </div>
-    <script src="script.js"></script>
+</div>
+
+<div class="app-container" id="appContainer">
+    <header>
+        <h1>Pro Focus</h1>
+        <div class="header-controls">
+            <button class="settings-toggle" onclick="openSettings()">Settings</button>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark Mode</button>
+        </div>
+    </header>
+
+    <div id="tab-timer" class="content active">
+        <img src="image.png" alt="Study Atmosphere" class="banner-img">
+        <div style="display:flex; gap:10px;">
+            <select id="subjectSelector" class="subject-select" onchange="changeSubject()">
+                <option value="" disabled selected>Select Subject</option>
+            </select>
+            <button onclick="openSubjectModal()" style="width:50px; height:52px; background:var(--card-bg); border:1px solid var(--border-color); color:var(--text-color); cursor:pointer;">+</button>
+        </div>
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <button id="mainBtn" class="control-btn" onclick="toggleTimer()">Start Focus</button>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <p style="font-size: 12px; color: #888;">TODAY'S TOTAL</p>
+            <p id="totalTimeDisplay" style="font-size: 18px; margin-top: 5px;">00:00:00</p>
+            
+            <div class="goal-container">
+                <div class="goal-label">
+                    <span>Daily Goal</span>
+                    <span id="goalText">0%</span>
+                </div>
+                <div class="goal-track">
+                    <div id="goalFill" class="goal-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-stats" class="content">
+        <img src="image2.png" alt="Statistics" class="banner-img">
+        <h2 style="font-size: 16px; margin-bottom: 20px; font-weight:400;">Study Analysis</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Date</div>
+                <div class="stat-value" id="currentDate">--</div>
+            </div>
+        </div>
+        <div style="margin-top: 30px;">
+            <div class="stat-title">Time Per Subject</div>
+            <div id="chartContainer" class="bar-chart"></div>
+        </div>
+    </div>
+
+    <div id="tab-planner" class="content">
+        <img src="image3.png" alt="Planner" class="banner-img">
+        <h2 style="font-size: 16px; margin-bottom: 15px; font-weight:400;">Checklist</h2>
+        <div class="input-group">
+            <input type="text" id="todoInput" class="simple-input" placeholder="New Task...">
+            <button class="add-btn" onclick="addTodo()">+</button>
+        </div>
+        <div id="todoList"></div>
+        <h2 style="font-size: 16px; margin-top: 40px; margin-bottom: 10px; font-weight:400;">Memo</h2>
+        <textarea id="memoArea" class="memo-area" placeholder="Write your thoughts..." oninput="saveMemo()"></textarea>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('timer', this)">Timer</div>
+        <div class="nav-item" onclick="switchTab('stats', this)">Stats</div>
+        <div class="nav-item" onclick="switchTab('planner', this)">Planner</div>
+    </nav>
+</div>
+
+<div id="modalSubject" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:15px; font-size:14px;">Add New Subject</h3>
+        <input type="text" id="newSubjectInput" class="simple-input" style="width:100%; margin-bottom:20px;" placeholder="Subject Name">
+        <button class="control-btn" style="padding:10px;" onclick="addSubject()">Add</button>
+        <button class="control-btn stop" style="padding:10px; margin-top:10px;" onclick="closeSubjectModal()">Cancel</button>
+    </div>
+</div>
+
+<div id="modalSettings" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:20px; font-size:14px; text-align:center;">SETTINGS</h3>
+        
+        <div class="settings-section">
+            <label class="settings-label">Daily Goal (Hours)</label>
+            <input type="number" id="goalInput" class="simple-input" style="width:100%;" min="1" max="24" onchange="updateGoalSetting()">
+        </div>
+
+        <div class="settings-section">
+            <label class="settings-label">Data Management</label>
+            <button class="action-btn" onclick="downloadData()">Export Data (.txt)</button>
+            <button class="danger-btn" onclick="resetApp()">Reset All Data</button>
+        </div>
+
+        <button class="control-btn stop" style="padding:10px; margin-top:10px;" onclick="closeSettings()">Close</button>
+    </div>
+</div>
+
+<script>
+    // --- [STATE] ---
+    let state = {
+        theme: 'light',
+        subjects: {},
+        currentSubject: null,
+        todos: [],
+        memo: "",
+        lastDate: new Date().toLocaleDateString(),
+        dailyGoal: 18000 // [NEW] Default 5 hours (in seconds)
+    };
+    let timerInterval = null;
+    let isRunning = false;
+
+    // --- [INIT] ---
+    window.onload = function() {
+        loadData();
+        renderSubjects();
+        renderTodos();
+        updateUI();
+        
+        const today = new Date().toLocaleDateString();
+        document.getElementById('currentDate').innerText = today;
+        if(state.lastDate !== today) {
+            state.lastDate = today; 
+            saveData();
+        }
+
+        // Initialize Goal Input
+        document.getElementById('goalInput').value = state.dailyGoal / 3600;
+
+        // Splash Sequence
+        setTimeout(() => {
+            document.getElementById('splash-screen').classList.add('hidden');
+            document.getElementById('appContainer').classList.add('revealed');
+            document.body.style.overflow = 'auto'; 
+        }, 2200);
+    };
+
+    // --- [PERSISTENCE] ---
+    function saveData() { localStorage.setItem('proFocusData', JSON.stringify(state)); }
+    function loadData() {
+        const data = localStorage.getItem('proFocusData');
+        if (data) {
+            state = JSON.parse(data);
+            if(!state.dailyGoal) state.dailyGoal = 18000; // Backwards compatibility
+            
+            document.documentElement.setAttribute('data-theme', state.theme);
+            document.querySelector('.theme-toggle').innerText = state.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+            document.getElementById('memoArea').value = state.memo;
+            if(Object.keys(state.subjects).length > 0 && !state.currentSubject) {
+                state.currentSubject = Object.keys(state.subjects)[0];
+            }
+        } else {
+            state.subjects = { "Mathematics": 0, "English": 0, "Science": 0 };
+            state.currentSubject = "Mathematics";
+            saveData();
+        }
+    }
+
+    // --- [THEME & SETTINGS] ---
+    function toggleTheme() {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', state.theme);
+        document.querySelector('.theme-toggle').innerText = state.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+        saveData();
+    }
+
+    function openSettings() { document.getElementById('modalSettings').style.display = 'flex'; }
+    function closeSettings() { document.getElementById('modalSettings').style.display = 'none'; }
+    
+    function updateGoalSetting() {
+        const val = document.getElementById('goalInput').value;
+        if(val > 0) {
+            state.dailyGoal = val * 3600;
+            updateUI();
+            saveData();
+        }
+    }
+
+    // [NEW] Export Data
+    function downloadData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "pro_focus_backup.txt");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    // [NEW] Reset App
+    function resetApp() {
+        if(confirm("Are you sure? This will delete all study data.")) {
+            localStorage.removeItem('proFocusData');
+            location.reload();
+        }
+    }
+
+    // --- [APP LOGIC] ---
+    function switchTab(tabId, navEl) {
+        document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        navEl.classList.add('active');
+        if(tabId === 'stats') renderStats();
+    }
+
+    function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (totalSeconds % 60).toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('mainBtn');
+        const select = document.getElementById('subjectSelector');
+        if (!state.currentSubject) { alert("Please select a subject first."); return; }
+
+        if (isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            btn.innerText = "Start Focus";
+            btn.classList.remove('stop');
+            select.disabled = false;
+            saveData();
+        } else {
+            isRunning = true;
+            btn.innerText = "Stop Focus";
+            btn.classList.add('stop');
+            select.disabled = true;
+            timerInterval = setInterval(() => {
+                state.subjects[state.currentSubject]++;
+                updateUI();
+                saveData();
+            }, 1000);
+        }
+    }
+
+    function updateUI() {
+        // 1. Timer
+        if(state.currentSubject) {
+            document.getElementById('timerDisplay').innerText = formatTime(state.subjects[state.currentSubject]);
+        }
+        
+        // 2. Total Time
+        let total = Object.values(state.subjects).reduce((a, b) => a + b, 0);
+        document.getElementById('totalTimeDisplay').innerText = formatTime(total);
+
+        // 3. [NEW] Goal Progress
+        const goalPercent = Math.min((total / state.dailyGoal) * 100, 100);
+        const fill = document.getElementById('goalFill');
+        fill.style.width = goalPercent + '%';
+        document.getElementById('goalText').innerText = Math.floor(goalPercent) + '%';
+        
+        if(goalPercent >= 100) fill.classList.add('completed');
+        else fill.classList.remove('completed');
+    }
+
+    function renderSubjects() {
+        const select = document.getElementById('subjectSelector');
+        select.innerHTML = '';
+        Object.keys(state.subjects).forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub;
+            option.innerText = sub;
+            if(sub === state.currentSubject) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    function changeSubject() {
+        const select = document.getElementById('subjectSelector');
+        state.currentSubject = select.value;
+        updateUI();
+        saveData();
+    }
+
+    function openSubjectModal() { document.getElementById('modalSubject').style.display = 'flex'; }
+    function closeSubjectModal() { document.getElementById('modalSubject').style.display = 'none'; }
+    function addSubject() {
+        const input = document.getElementById('newSubjectInput');
+        const name = input.value.trim();
+        if(name && !state.subjects[name]) {
+            state.subjects[name] = 0;
+            state.currentSubject = name;
+            renderSubjects(); updateUI(); saveData();
+            input.value = ''; closeSubjectModal();
+        } else if (state.subjects[name]) { alert("Subject already exists."); }
+    }
+
+    function renderStats() {
+        const container = document.getElementById('chartContainer');
+        container.innerHTML = '';
+        const total = Object.values(state.subjects).reduce((a,b)=>a+b, 0);
+        Object.keys(state.subjects).forEach(sub => {
+            const time = state.subjects[sub];
+            const percent = total === 0 ? 0 : (time / total) * 100;
+            const item = document.createElement('div');
+            item.className = 'bar-item';
+            item.innerHTML = `<div class="bar-label">${sub}</div><div class="bar-track"><div class="bar-fill" style="width: ${percent}%"></div></div><div>${formatTime(time)}</div>`;
+            container.appendChild(item);
+        });
+    }
+
+    function addTodo() {
+        const input = document.getElementById('todoInput');
+        const text = input.value.trim();
+        if(text) { state.todos.push({ text: text, done: false }); renderTodos(); saveData(); input.value = ''; }
+    }
+    function toggleTodo(index) { state.todos[index].done = !state.todos[index].done; renderTodos(); saveData(); }
+    function deleteTodo(index) { state.todos.splice(index, 1); renderTodos(); saveData(); }
+    function renderTodos() {
+        const list = document.getElementById('todoList');
+        list.innerHTML = '';
+        state.todos.forEach((todo, index) => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `<div class="checkbox ${todo.done ? 'checked' : ''}" onclick="toggleTodo(${index})"></div><div class="item-text ${todo.done ? 'completed' : ''}">${todo.text}</div><div style="cursor:pointer; font-size:10px; padding:5px;" onclick="deleteTodo(${index})">X</div>`;
+            list.appendChild(div);
+        });
+    }
+    function saveMemo() { state.memo = document.getElementById('memoArea').value; saveData(); }
+
+</script>
 </body>
-
 </html>
-<section id="timer" class="tab-content active">
-    <div class="hero-image-container">
-        <img src="image.png" alt="Focus Mood" class="main-hero">
-        <div class="overlay-content">
-            <h3 id="current-subject-display">SELECT SUBJECT</h3>
-            <div class="time-text" id="stopwatch">00:00:00</div>
-        </div>
-    </div>
-
-    <div class="subject-management">
-        <div class="subject-header">
-            <h4>Subjects</h4>
-            <div class="add-subject">
-                <input type="text" id="new-subject-name" placeholder="New Subject...">
-                <button onclick="addSubject()"><i class="ph ph-plus"></i></button>
-            </div>
-        </div>
-        <div id="subject-list" class="subject-grid">
-            </div>
-    </div>
-
-    <div class="controls">
-        <button id="start-btn" onclick="startTimer()">START</button>
-        <button id="pause-btn" onclick="pauseTimer()" disabled>PAUSE</button>
-    </div>
-</section>
