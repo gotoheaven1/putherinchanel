@@ -101,4 +101,31 @@
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>
+<section id="timer" class="tab-content active">
+    <div class="hero-image-container">
+        <img src="image.png" alt="Focus Mood" class="main-hero">
+        <div class="overlay-content">
+            <h3 id="current-subject-display">SELECT SUBJECT</h3>
+            <div class="time-text" id="stopwatch">00:00:00</div>
+        </div>
+    </div>
+
+    <div class="subject-management">
+        <div class="subject-header">
+            <h4>Subjects</h4>
+            <div class="add-subject">
+                <input type="text" id="new-subject-name" placeholder="New Subject...">
+                <button onclick="addSubject()"><i class="ph ph-plus"></i></button>
+            </div>
+        </div>
+        <div id="subject-list" class="subject-grid">
+            </div>
+    </div>
+
+    <div class="controls">
+        <button id="start-btn" onclick="startTimer()">START</button>
+        <button id="pause-btn" onclick="pauseTimer()" disabled>PAUSE</button>
+    </div>
+</section>
