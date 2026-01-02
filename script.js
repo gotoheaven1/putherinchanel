@@ -201,4 +201,81 @@ function resetData() {
         localStorage.removeItem('focusAppData');
         location.reload();
     }
+
+}
+// script.js 업데이트
+let appData = JSON.parse(localStorage.getItem('focusAppData')) || {
+    theme: 'light',
+    subjects: ["Mathematics", "English"], // 기본 과목
+    todos: [],
+    studyHistory: {}, // { "2024-05-20": { "Mathematics": 3600, "English": 1200 } }
+    currentSubject: "Mathematics"
+};
+
+let activeSubject = appData.currentSubject;
+
+function renderSubjects() {
+    const container = document.getElementById('subject-list');
+    container.innerHTML = '';
+    
+    appData.subjects.forEach(sub => {
+        const todayData = appData.studyHistory[todayKey] || {};
+        const subTime = todayData[sub] || 0;
+        
+        const div = document.createElement('div');
+        div.className = `subject-card ${activeSubject === sub ? 'active' : ''}`;
+        div.onclick = () => selectSubject(sub);
+        div.innerHTML = `
+            <span class="sub-name">${sub}</span>
+            <span class="sub-time">${formatTime(subTime)}</span>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function selectSubject(sub) {
+    if (isRunning) {
+        alert("Please pause the timer first.");
+        return;
+    }
+    activeSubject = sub;
+    appData.currentSubject = sub;
+    document.getElementById('current-subject-display').innerText = sub;
+    renderSubjects();
+    saveData();
+}
+
+function addSubject() {
+    const input = document.getElementById('new-subject-name');
+    const name = input.value.trim();
+    if (name && !appData.subjects.includes(name)) {
+        appData.subjects.push(name);
+        input.value = '';
+        renderSubjects();
+        saveData();
+    }
+}
+
+// 타이머 저장 로직 수정
+function saveStudyTime(addSeconds) {
+    if (!appData.studyHistory[todayKey]) {
+        appData.studyHistory[todayKey] = {};
+    }
+    if (!appData.studyHistory[todayKey][activeSubject]) {
+        appData.studyHistory[todayKey][activeSubject] = 0;
+    }
+    
+    appData.studyHistory[todayKey][activeSubject] += addSeconds;
+    
+    // UI 업데이트
+    renderSubjects();
+    updateTodayTotal();
+    saveData();
+}
+
+// 전체 공부 시간 합산 계산
+function updateTodayTotal() {
+    const todayData = appData.studyHistory[todayKey] || {};
+    const totalSeconds = Object.values(todayData).reduce((a, b) => a + b, 0);
+    document.getElementById('today-total').innerText = formatTime(totalSeconds);
 }
